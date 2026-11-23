@@ -1,0 +1,11 @@
+source_file	method_stub_count
+jadx/sources/com/xunji/flashcards/anki/AnkiImportService$commitLocked$5$1$result$1.java	1
+jadx/sources/com/xunji/flashcards/anki/MediaStore.java	3
+jadx/sources/com/xunji/flashcards/anki/PreparedPackage.java	1
+jadx/sources/com/xunji/flashcards/backup/BackupArchive$readZip$manifest$1$1$4.java	1
+jadx/sources/com/xunji/flashcards/backup/BackupArchive.java	5
+jadx/sources/com/xunji/flashcards/backup/BackupService.java	1
+jadx/sources/com/xunji/flashcards/data/AnkiRepository.java	1
+jadx/sources/com/xunji/flashcards/ui/components/AnkiCardContentKt.java	1
+jadx/sources/com/xunji/flashcards/ui/screens/DecksScreenKt.java	1
+jadx/sources/com/xunji/flashcards/ui/screens/ReviewScreenKt.java	2
