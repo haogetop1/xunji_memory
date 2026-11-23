@@ -1,0 +1,51 @@
+name: Publish Xunji recovery prerelease
+on:
+  push:
+    branches: [main]
+    paths: ['release/xunji-0.1.0-recovery.json']
+permissions:
+  contents: write
+concurrency: xunji-0.1.0-recovery
+jobs:
+  publish:
+    if: github.repository == 'haogetop1/xunji_memory'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Verify and publish release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=v0.1.0-recovery.1
+          if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release $tag already exists"
+            exit 1
+          fi
+          gh api "repos/$GH_REPO/contents/release/xunji-0.1.0-recovery.json?ref=$GITHUB_SHA" --jq .content | base64 --decode > manifest.json
+          source_file=xunji-0.1.0-source-recovery.zip
+          apk_file=xunji-0.1.0-reassembled-debug.apk
+          get_blob() {
+            [[ $1 =~ ^[0-9a-f]{40}$ ]]
+            gh api "repos/$GH_REPO/git/blobs/$1" --jq .content | base64 --decode
+          }
+          get_blob "$(jq -er .source_blob manifest.json)" > "$source_file"
+          jq -er '.apk_blobs[]' manifest.json > apk-parts.txt
+          while IFS= read -r part; do get_blob "$part"; done < apk-parts.txt > "$apk_file"
+          printf '%s  %s\n' \
+            575f162d00737e1c64d4c876a6de95e116cf062a89caab4d40695d7d356be4cc "$source_file" \
+            48b835599696522dc1a6d216112da745871fb84432fd0623c81e5d4888f21bff "$apk_file" > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+          cat > release-notes.md <<'NOTES'
+          从「循记」0.1.0 调试 APK 恢复的源码及重编译 APK。
+
+          - 源码包包含 JADX 输出、822 个应用类的 Smali、资源、Kotlin 核心逻辑和重编译脚本。
+          - 822 个应用类重新汇编后，经反汇编比对与原版 Smali 逐文件一致。APK 通过签名和对齐校验，尚未进行设备运行验证。
+          - APK 使用新的调试签名，无法覆盖安装同包名的原版。
+          - 完整的原始 Kotlin Android 工程仍待恢复。
+          NOTES
+          gh release create "$tag" "$source_file" "$apk_file" SHA256SUMS.txt \
+            --repo "$GH_REPO" --target "$GITHUB_SHA" --prerelease \
+            --title '循记 0.1.0 源码恢复预发行版' --notes-file release-notes.md
